@@ -1,0 +1,158 @@
+---
+title: "dataset_creation"
+author: "Ruby Hickman"
+date: "3/27/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+library(dplyr)
+library(sas7bdat)
+source_dir <- "~/Google Drive/AD_R01_WB/Students/rubyh/cognition_mental_work/data/"
+
+```
+
+###democog 3-9-20 dataset  
+Variables of interest from democog dataset:  
+Demographic Measures:  
+  - JIWWAVE: interviewed in 2004 wave (0: No, 1: Yes)  
+  - JPROXY: 2004 proxy status (5: Core interview obtained, not a proxy)  
+  - JAGE: Age at 2004 interview  
+  - RACE: Race/ethnicity (0: Not obtained, 1: White/caucasian, 2: Black or AA, 7: Other)  
+  - GENDER: Gender (1: Male, 2: Female)  
+  - YRENTER: Year respondent entered study  
+  - DEGREE: Highest degree of education ("0: No degree, 1: GED, 2: HS diploma, 3: Two-year college degree,
+    4: Four-year college degree, 5: Master's degree, 6: Professional degree (PhD, MD, JD), 
+    9: Degree unknown/Some college")  
+  - SCHLRYRS: Number of years in school  
+Outcome Measures:  
+  - R7BWC20: 2004 backwards count from 20 (0: not successful, 1: successful on second try, 2: successful first try)  
+  - R7SER7: 2004 serial 7s (0-5: Number of correct subtractions)  
+  - R7TR20: 2004 total word recall score (0-20: Number correct)  
+  - TOTSCORE04: 2004 27 point cognition score, sum of BWC20, SER7, and TR20 (0-27: Range of scores)  
+Covariate Measures:  
+  - Practice Effect:  
+    - R6BWC20: 2002 backwards count from 20 (0: not successful, 1: successful on second try, 2: successful first try)  
+    - R6SER7: 2002 serial 7s (0-5: Number of correct subtractions)  
+    - R6TR20: 2002 total word recall score (0-20: Number correct)  
+    - TOTSCORE02: 2002 27 point cognition score, sum of BWC20, SER7, and TR20 (0-27: Range of scores)  
+    - R5BWC20: 2000 backwards count from 20 (0: not successful, 1: successful on second try, 2: successful first try)  
+    - R5SER7: 2000 serial 7s (0-5: Number of correct subtractions)  
+    - R5TR20: 2000 total word recall score (0-20: Number correct)  
+    - TOTSCORE00: 2000 27 point cognition score, sum of BWC20, SER7, and TR20 (0-27: Range of scores)  
+    - R4BWC20: 1998 backwards count from 20 (0: not successful, 1: successful on second try, 2: successful first try)  
+    - R4SER7: 1998 serial 7s (0-5: Number of correct subtractions)  
+    - R4TR20: 1998 total word recall score (0-20: Number correct)  
+    - TOTSCORE98: 1998 27 point cognition score, sum of BWC20, SER7, and TR20 (0-27: Range of scores)  
+    - R3ABWC20: 1996 backwards count from 20 (0: not successful, 1: successful on second try, 2: successful first try) 
+    - R3SER7: 1996 serial 7s (0-5: Number of correct subtractions)  
+    - R3ATR20: 1996 total word recall score (0-20: Number correct)  
+    - TOTSCORE96: 1996 27 point cognition score, sum of ABWC20, SER7, and ATR20 (0-27: Range of scores)  
+  - R7CESD: 2004 CESD score (0-8: range of score, higher = more depressed)  
+  - R7DIABE: 2004 ever had diabetes (0: No, 1: Yes)  
+  - R7HIBPE: 2004 ever had high blood pressure (0: No, 1: Yes)  
+  - SMOKE04: Smoking status (0: Never, 1: Former, 2: Current)  
+  - JC223: 2004 vigorous activity (1: >Once per week, 2: Once per week, 3: 1-3 times/mo, 4: Hardle ever/never, 
+    7: Every day (volunteered, not normal option), 8: DK, 9: RF)  
+  - JC224: 2004 moderate activity (1: >Once per week, 2: Once per week, 3: 1-3 times/mo, 4: Hardle ever/never, 
+    7: Every day (volunteered, not normal option), 8: DK, 9: RF)  
+  - JC225: 2004 mild activity (1: >Once per week, 2: Once per week, 3: 1-3 times/mo, 4: Hardle ever/never, 
+    7: Every day (volunteered, not normal option), 8: DK, 9: RF)  
+  - R7DRINK: Drinks alcohol (0: No, 1: Yes)  
+  - R7DRINKD: Numer of days per week drink in past month (0: 0 days or doesn't drink, 1-7: number of days)  
+  - R7DRINKN: Number drinks/day on days when drinking (0: 0 drinks or doesn't drink, 1-50: # drinks)  
+  
+  
+```{r}
+load(paste0(source_dir,"HRS_democoggen_wide20200309.Rda"))
+dim(HRS)
+#how many interviewed in 2004 wave? 
+table(HRS$JIWWAVE, useNA = "always") #21821 interviewed
+table(HRS$JPROXY, useNA = "always") #5 indicates core interview obtained and there was no proxy
+table(HRS$YRENTER, useNA = "always")
+
+#outcome measures
+table(HRS$R7BWC20, useNA = "always") #18327 have a valid backward count measure for 2004
+table(HRS$R7SER7, useNA = "always") #18327 have a valid serial 7 measure for 2004
+table(HRS$R7TR20, useNA = "always") #18327 have a valid total word recall score for 2004
+table(HRS$totscore04, useNA = "always") #18327 have a valid summary score of the above measures for 2004
+
+#covariate measures
+table(HRS$R7CESD, useNA = "always") #blank and "M" instead of NA
+table(HRS$R7DIABE, useNA = "always") #blank for NA
+table(HRS$R7HIBPE, useNA = "always") #blank for NA
+table(HRS$smoke04, useNA = "always") 
+table(HRS$JC223) #missing
+table(HRS$JC224) #missing
+table(HRS$JC225) #missing
+table(HRS$R7DRINK, useNA = "always") #blank for NA
+table(HRS$R7DRINKD, useNA = "always") #blank, ".D=DK/NA", "R=RF", "NA" all used
+table(HRS$R7DRINKN, useNA = "always") #blank, ".D=DK/NA", ".M=Oth missing", "R=RF", "NA" all used
+table(HRS$DEGREE, useNA = "always") 
+table(HRS$SCHLYRS, useNA = "always") 
+```
+  
+###RAND longitudinal dataset  
+Variables of interest pulled by Erin 3-30-20: 
+Exposure measures:  
+  - R1WORK: Respondent works for pay W1 (0: No, 1: Yes)  
+  - R2WORK: Respondent works for pay W2 (0: No, 1: Yes)  
+  - R3WORK: Respondent works for pay W3 (0: No, 1: Yes)  
+  - R4WORK: Respondent works for pay W4 (0: No, 1: Yes)  
+  - R5WORK: Respondent works for pay W5 (0: No, 1: Yes)  
+  - R6WORK: Respondent works for pay W6 (0: No, 1: Yes)  
+  - R7WORK: Respondent works for pay W7 (0: No, 1: Yes)  
+  - R7JPHYS: Job requires physical effort (1: All or almost all of the time, 2: most of the time, 3: some of the time, 4: none or almost none of the time)  
+  - R7JLIFT: Job requires lifting heavy loads (1: All or almost all of the time, 2: most of the time, 3: some of the time, 4: none or almost none of the time)  
+  - R7JSTOOP: Job requires stooping/kneeling/crouching (1: All or almost all of the time, 2: most of the time, 3: some of the time, 4: none or almost none of the time)  
+  - R7JSIGHT: Job requires good eyesight (1: All or almost all of the time, 2: most of the time, 3: some of the time, 4: none or almost none of the time)  
+  - R7JSTRES: Job involves a lot of stress (1: All or almost all of the time, 2: most of the time, 3: some of the time, 4: none or almost none of the time)  
+  - R7SHLT: Self-reported health (1: Excellent, 2: very good, 3: good, 4: fair, 5: poor)  
+
+Covariate measures:  
+  - R7STROKE: Ever had stroke (0: No, 1: Yes)  
+  - R7MEMRYE: Ever had memory-related condition (0: No, 1: Yes)  
+  - R7IEARN: Respondent income from earnings  
+
+```{r}
+rand <- read.sas7bdat(paste0(source_dir,"hrs_rand_for_workdemands.sas7bdat"))
+save(rand, file=paste0(source_dir, "rand_longitudinal.rda"))
+
+dim(rand)
+
+#exposure measures
+table(rand$R7WORK, useNA = "always") 
+table(rand$R7JPHYS, useNA = "always") 
+```
+  
+###2004 Fat File  
+Variables of interest from 2004 wave, not included in RAND longitudinal or democog dataset:  
+
+Exposure measures:  
+  - JG086: Volunteering in past 12 months (1: Yes, 5: no, 8: DK/NA, 9: RF, Blank: Inapplicable)  
+  - JG195: Volunteering 100 hours in past 12 months (1: less than 100, 3: about 100, 5: more than 100 hours, 8: DK/NA, 9: RF, Blank: Inapplicable)  
+  - JG196: Volunteering 200 hours in past 12 months (1: less than 200, 3: about 200, 5: more than 200 hours, 8: DK/NA, 9: RF, Blank: Inapplicable)  
+  - JG197: Volunteering 50 hours in past 12 months (1: less than 50, 3: about 50, 5: more than 50 hours, 8: DK/NA, 9: RF, Blank: Inapplicable)  
+  - JG198: Helping friends in past 12 months (1: Yes, 5: no, 8: DK/NA, 9: RF, Blank: Inapplicable)  
+  - JG199: Helping friends 100 hours in past 12 months (1: less than 100, 3: about 100, 5: more than 100 hours, 8: DK/NA, 9: RF, Blank: Inapplicable)  
+  - JG200: Helping friends 200 hours in past 12 months (1: less than 200, 3: about 200, 5: more than 200 hours, 8: DK/NA, 9: RF, Blank: Inapplicable)  
+  - JG201: Helping friends 50 hours in past 12 months (1: less than 50, 3: about 50, 5: more than 50 hours, 8: DK/NA, 9: RF, Blank: Inapplicable)  
+  - JJ542: Job requires intense concentration (1: all or almost all of the time, 2: most of the time, 3: some of the time, 4: none or almost none of the time, 8: DK/NA, 9: RF, Blank: Inapplicable)  
+  - JJ543: Job requires skills in dealing with other people (1: all or almost all of the time, 2: most of the time, 3: some of the time, 4: none or almost none of the time, 8: DK/NA, 9: RF, Blank: Inapplicable)  
+  - JJ544: Job requires computer use (1: all or almost all of the time, 2: most of the time, 3: some of the time, 4: none or almost none of the time, 8: DK/NA, 9: RF, Blank: Inapplicable)  
+  - JJ546: Job requires me to do more difficult things than it used to (1: all or almost all of the time, 2: most of the time, 3: some of the time, 4: none or almost none of the time, 8: DK/NA, 9: RF, Blank: Inapplicable)  
+  
+Covariate measures:    
+  - JJ552: Enjoys going to work (1: Strongly agree, 2: Agree, 3: Disagree, 4: Strongly disagree, 8: DK/NA, 9: RF, Blank: Inapplicable)
+  
+```{r}
+fat <- read.sas7bdat(paste0(source_dir,"hrs_rand_fatfile_2004.sas7bdat"))
+save(fat, file=paste0(source_dir, "rand_04fat.rda"))
+
+dim(fat)
+```
+  
