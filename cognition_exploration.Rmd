@@ -1,0 +1,154 @@
+---
+title: "TICS subscore and Langa-Weir Cognition Exploration"
+author: "Ruby Hickman"
+date: "2/13/2020"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(dpi=300,fig.width=7)
+```
+
+```{r, include = FALSE}
+library(ggplot2)
+library(epiDisplay)
+library(dplyr)
+library(corrplot)
+
+load("/Users/rubyhickman/Documents/01_michigan/work/cognition_mental_work/danny work/df_sub_04.rda")
+```
+
+Exploring distributions of the "langa" variable, which is actually just the raw TICS subscore (0-27) which
+goes into calculating the langa-weir cognition categories.  
+```{r}
+#tics subscore of entire sample 
+ggplot(df.sub) + 
+  aes(x = df.sub$langa) +
+  labs(x = "TICS subscore (0-27), unstratified (n=2774)") +
+  geom_histogram(color = "#CFBAE1", fill = "#D6CCE0", binwidth = 1)
+
+#stratified by physical work demands
+ggplot(df.sub) + 
+  aes(x = df.sub$langa, fill = df.sub$physical.cut) +
+  labs(x = "TICS subscore (0-27), stratified by low vs. high physical demands", fill = "Mean physical \n demand score") +
+  geom_histogram(color = "#C59FC9", alpha = 0.7, binwidth = 1, position = 'identity')
+t.test(df.sub$langa ~ df.sub$physical.cut) #significant difference 
+
+#mental work demands 
+df.sub$md_cut <- cut(df.sub$mental.demand.average, quantile(df.sub$mental.demand.average, c(0, 0.5, 1.0)), include.lowest = T)
+ggplot(df.sub) + 
+  aes(x = df.sub$langa, fill = df.sub$md_cut) +
+  labs(x = "TICS subscore (0-27), stratified by low vs. high mental demands", fill = "Mean mental \n demand score") +
+  geom_histogram(color = "#C59FC9", alpha = 0.7, binwidth = 1, position = 'identity')
+t.test(df.sub$langa ~ df.sub$md_cut) #significant difference 
+
+#volunteering/helping friends 
+ggplot(df.sub) + 
+  aes(x = df.sub$langa, fill = factor(df.sub$volunt.help.bin)) +
+  labs(x = "TICS subscore (0-27), stratified by volunteering/helping friends", fill = "Volunteering or helping \n friends (1 = yes?) \n ≥50hr/yr?") +
+  geom_histogram(color = "#C59FC9", alpha = 0.7, binwidth = 1, position = 'identity')
+t.test(df.sub$langa ~ df.sub$volunt.help.bin) #significant difference 
+
+#practice effect 
+ggplot(df.sub) + 
+  aes(x = df.sub$langa, fill = as.factor(df.sub$prac.effect)) +
+  labs(x = "TICS subscore (0-27), stratified by practice effect", fill = "Practice effect \n 1 = Yes") +
+  geom_histogram(color = "#C59FC9", alpha = 0.7, binwidth = 1, position = 'identity')
+t.test(langa ~ prac.effect, data = df.sub) #not a significant difference in means
+```
+  
+To analyze whether langa-weir is an acceptable option, also categorized the TICS subscores into (actual) langa weir scores to analyze by groups.  
+```{r}
+#create categorical langa-weir category 
+df.sub <- mutate(df.sub, langa_weir = case_when(langa < 7 ~ "dementia", 
+                                      langa >= 7 & langa < 12 ~ "CIND", 
+                                      langa <=27 ~ "normal")) 
+#now dichotomous normal vs. impaired cognition 
+df.sub <- mutate(df.sub, langa_weir_dic = case_when(langa < 12 ~ "impaired", 
+                                      langa <=27 ~ "normal")) 
+df.sub$langa_weir <- factor(df.sub$langa_weir, levels = c("dementia", "CIND", "normal"))
+
+#all 
+ggplot(data = df.sub) + 
+  aes(x = langa_weir_dic) +
+  labs(x = "Langa-Weir Categorizations") +
+  geom_bar(fill = "#ACACDE", col = "#6E6E8E") 
+
+#by physical work demands 
+ggplot(data = df.sub) + 
+  aes(x = langa_weir_dic, fill = df.sub$physical.cut) +
+  labs(x = "Langa-Weir categorizations by physical work demands", fill = "Mean physical \n demand score") +
+  geom_bar(col = "#C59FC9", position = "dodge")
+chisq.test(df.sub$langa_weir, df.sub$physical.cut)
+  #proportions of those in each outcome who had the exposure 
+ggplot(data = df.sub) + 
+  aes(x = langa_weir_dic, fill = df.sub$physical.cut) +
+  labs(x = "Proportions of high physical demand status by cognitive status", fill = "Mean physical \n demand score") +
+  geom_bar(col = "#C59FC9", position = "fill")
+chisq.test(df.sub$langa_weir_dic, df.sub$physical.cut)
+
+#by mental work demands 
+ggplot(data = df.sub) + 
+  aes(x = langa_weir_dic, fill = df.sub$md_cut) +
+  labs(x = "Langa-Weir categorizations by mental work demands", fill = "Mean mental \n demand score") +
+  geom_bar(col = "#C59FC9", position = "dodge")
+chisq.test(df.sub$langa_weir, df.sub$md_cut)
+  #proportions of those in each outcome who had the exposure 
+ggplot(data = df.sub) + 
+  aes(x = langa_weir_dic, fill = df.sub$md_cut) +
+  labs(x = "Proportions of high mental demand status by cognitive status", fill = "Mean mental \n demand score") +
+  geom_bar(col = "#C59FC9", position = "fill")
+chisq.test(df.sub$langa_weir_dic, df.sub$md_cut)
+
+#by volunteering/helping friends: total counts 
+ggplot(data = df.sub) + 
+  aes(x = langa_weir_dic, fill = factor(df.sub$volunt.help.bin)) +
+  labs(x = "Langa-Weir categorizations by volunteering/helping friends", fill = "Volunteering or helping \n friends (1 = yes?) \n ≥50hr/yr?") +
+  geom_bar(col = "#C59FC9", position = "dodge")
+chisq.test(df.sub$langa_weir, df.sub$volunt.help.bin)
+  #proportions of those in each outcome who had the exposure 
+ggplot(data = df.sub) + 
+  aes(x = langa_weir_dic, fill = factor(df.sub$volunt.help.bin)) +
+  labs(x = "Proportions of volunteering status by cognitive status", fill = "Volunteering or helping \n friends (1 = yes?) \n ≥50hr/yr?") +
+  geom_bar(col = "#C59FC9", position = "fill")
+chisq.test(df.sub$langa_weir_dic, df.sub$volunt.help.bin)
+
+#by practice effect  
+ggplot(data = df.sub) + 
+  aes(x = langa_weir_dic, fill = as.factor(df.sub$prac.effect)) +
+  labs(x = "Langa-Weir categorizations stratified by practice effect", fill = "Practice effect \n 1: Yes") +
+  geom_bar(col = "#C59FC9", position = "dodge")
+chisq.test(df.sub$langa_weir, df.sub$prac.effect)
+
+ggplot(data = df.sub) + 
+  aes(x = langa_weir_dic, fill = as.factor(df.sub$prac.effect)) +
+  labs(x = "Proportions of practice effect status by cognitive status", fill = "Practice effect \n 1: Yes") +
+  geom_bar(col = "#C59FC9", position = "dodge")
+chisq.test(df.sub$langa_weir_dic, df.sub$prac.effect) #not a significant p-value 
+```
+  
+Relationship between exposure variables -- are they related in the ways we would expect?  
+```{r}
+#Mental work demands and physical work demands 
+cor(df.sub$avg.physical.job, df.sub$mental.demand.average)
+
+ggplot(df.sub) + aes(x = df.sub$avg.physical.job, y = df.sub$mental.demand.average) + 
+  geom_point(shape = 1, col = "#8367C7") + 
+  geom_smooth(col = "#053225", method = lm) + 
+  labs(x = "Mean Physical Work Demands", y = "Mean Mental Work Demands")
+
+#Mental work demands and volunteering/helping friends 
+ggplot(df.sub, aes(factor(volunt.help.bin), y = mental.demand.average)) + 
+  geom_boxplot(fill = c("#E34A6F", "#BB7E8C")) + 
+  labs(x = "Volunteering or helping friends (1 = yes?) ≥50hr/yr", y = "Mean Mental Work Demands")
+t.test(df.sub$mental.demand.average ~ df.sub$volunt.help.bin) #significant 
+
+#Mean physical work demands and volunteering/helping friends 
+ggplot(df.sub, aes(factor(volunt.help.bin), y = avg.physical.job)) + 
+  geom_boxplot(fill = c("#E34A6F", "#BB7E8C")) + 
+  labs(x = "Volunteering or helping friends (1 = yes?) ≥50hr/yr", y = "Mean Physical Work Demands")
+t.test(df.sub$avg.physical.job ~ df.sub$volunt.help.bin) #not significant 
+```
+
